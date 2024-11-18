@@ -34,3 +34,41 @@ LIMS/
 ├── backend/ # Express 后端服务
 ├── package.json # 项目配置文件
 └── README.md # 项目文档
+
+## 快速开始
+
+1. 克隆项目 bash
+git clone <repository-url>
+cd LIMS
+
+2. 安装依赖
+bash
+npm run install:all
+
+3. 启动开发服务器
+bash
+启动前端
+npm run start:frontend
+启动后端
+npm run start:backend
+
+## 功能特性
+
+- 用户认证与授权
+- 样品管理
+- 实验数据记录
+- 报告生成
+- 数据分析
+- 库存管理
+
+## 贡献指南
+
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+## 许可证
+
+ISC License
