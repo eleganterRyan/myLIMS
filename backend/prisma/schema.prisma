@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  name      String
+  role      String   // admin, staff, researcher
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tasks     SafetyTask[]
+  reports   SafetyReport[]
+  leadingGroups    ResearchGroup[] @relation("GroupLeader")
+  memberOfGroups   ResearchGroup[] @relation("GroupMembers")
+}
+
+// 实验室表
+model Laboratory {
+  id                  Int       @id @default(autoincrement())
+  name                String    // 房间名称
+  roomId              String    @unique // 房间唯一ID
+  safetyLevel         Int       // 安全分级 1-5
+  safetyCategory      String    // 安全分类（化学、生物、物理等）
+  hazardSources       String[]  // 主要危险源
+  safetyFacilities    String[]  // 基础安全防护设施
+  researchGroups      ResearchGroup[] // 使用该实验室的课题组
+  equipment          Equipment[]
+  experiments        Experiment[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// 设备表
+model Equipment {
+  id            Int         @id @default(autoincrement())
+  name          String
+  model         String
+  serialNumber  String      @unique
+  status        String      // available, in_use, maintenance, broken
+  laboratoryId  Int
+  laboratory    Laboratory  @relation(fields: [laboratoryId], references: [id])
+  maintenanceRecords MaintenanceRecord[]
+  reservations  Reservation[]
+}
+
+// 设备维护记录
+model MaintenanceRecord {
+  id          Int       @id @default(autoincrement())
+  equipmentId Int
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  date        DateTime
+  description String
+  maintainer  String
+  status      String    // pending, completed
+}
+
+// 预约记录
+model Reservation {
+  id          Int       @id @default(autoincrement())
+  equipmentId Int
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  startTime   DateTime
+  endTime     DateTime
+  purpose     String
+  status      String    // pending, approved, rejected, completed
+}
+
+// 实验记录
+model Experiment {
+  id            Int         @id @default(autoincrement())
+  title         String
+  description   String
+  laboratoryId  Int
+  laboratory    Laboratory  @relation(fields: [laboratoryId], references: [id])
+  startDate     DateTime
+  endDate       DateTime?
+  status        String      // planned, in_progress, completed, cancelled
+}
+
+// 安全检查任务
+model SafetyTask {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  inspectorId Int
+  inspector   User      @relation(fields: [inspectorId], references: [id])
+  status      String    @default("pending") // pending, in_progress, completed
+  createdAt   DateTime  @default(now())
+  scheduledAt DateTime
+  checkItems  CheckItem[]
+  reports     SafetyReport[]
+}
+
+// 检查项目
+model CheckItem {
+  id          Int       @id @default(autoincrement())
+  content     String
+  status      String    @default("pending") // pass, fail, pending
+  remarks     String?
+  taskId      Int
+  task        SafetyTask @relation(fields: [taskId], references: [id])
+}
+
+// 安全报告
+model SafetyReport {
+  id            Int       @id @default(autoincrement())
+  taskId        Int
+  title         String
+  inspectorId   Int
+  inspector     User      @relation(fields: [inspectorId], references: [id])
+  inspectionDate DateTime
+  status        String    @default("draft") // draft, submitted, approved
+  summary       String
+  createdAt     DateTime  @default(now())
+  task          SafetyTask @relation(fields: [taskId], references: [id])
+}
+
+// 课题组
+model ResearchGroup {
+  id              Int       @id @default(autoincrement())
+  name            String    // 课题组名称
+  leaderId        Int       // 负责人ID
+  leader          User      @relation("GroupLeader", fields: [leaderId], references: [id])
+  direction       String    // 科研方向
+  members         User[]    @relation("GroupMembers")
+  laboratories    Laboratory[] // 关联的实验室
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  status          String    @default("active") // active, inactive
+} 
